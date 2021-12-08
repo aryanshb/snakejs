@@ -1,7 +1,9 @@
 import React from "react";
 
-import Food from "./Food"
-import "../App.css"
+import Food from "./Food";
+import Score from "./Score";
+
+import '../styles/Snake.css'
 
 const getRandomCoordinates = () => {
   const min = 1;
@@ -11,45 +13,51 @@ const getRandomCoordinates = () => {
   return [x, y];
 }
 
-const SnakeBody = (props) => {
-  const snakeBody = props.snakeDots.map((dot, index) => {
-    const style = {
-        left: `${dot[0]}%`,
-        top:  `${dot[1]}%`
-    };
+class SnakeBody extends React.Component {
+  render () {
+    const snakeBody = this.props.snakeDots.map((dot, index) => {
+      const style = {
+          left: `${dot[0]}%`,
+          top:  `${dot[1]}%`
+      };
 
-    return <div className = "snake-dot" key = {index} style = {style}></div>
-  });
-  
-  return (
-    <div className = "snake-body">
-      {snakeBody}
-    </div>
-  )
+      return <div className = "snake-dot" key = {index} style = {style}></div>
+    });
+    
+    return (
+      <div className = "snake-body">
+        {snakeBody}
+      </div>
+    )
+  }
 };
 
 export default class Snake extends React.Component {
   constructor (props) {
     super(props);
 
-    this.state = {
+    this.defaultState = {
       speed: 100,
       food: getRandomCoordinates(),
       direction: 'RIGHT',
       snakeDots: [
-        [0,0],
-        [2,0],
-        [4,0]
-      ]
+        [0, 0],
+        [2, 0],
+        [4, 0]
+      ],
+      started: false,
+      gameOver: false,
+      previousScore: 0
     };
+
+    this.state = this.defaultState;
 
     this.moveSnake = this.moveSnake.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.GameOver = this.GameOver.bind(this);
   }
 
   componentDidMount () {
-    setInterval(this.moveSnake, this.state.speed);
-    
     document.addEventListener('keydown', this.onKeyDown, false);
   }
 
@@ -58,40 +66,50 @@ export default class Snake extends React.Component {
   }
 
   componentDidUpdate(){
-    this.checkIfOutOfBorders();
+    if (!this.state.started)
+      return;
+    if (this.isOutOfBorders())
+      this.GameOver();
     this.checkIfCollapsed();
     this.checkIfEat();
   }
 
   onKeyDown (event) {
-    switch (event.keyCode) {
-      case 38:
-        if (!["UP", "DOWN"].includes(this.state.direction))
-          this.setState({ direction: "UP" });
-        break;
-      
-      case 40:
-        if (!["UP", "DOWN"].includes(this.state.direction))
-          this.setState({ direction: "DOWN" });
-        break;
-      
-      case 37:
-        if (!["LEFT", "RIGHT"].includes(this.state.direction))
-          this.setState({ direction: "LEFT" });  
-        break;
-      
-      case 39:
-        if (!["LEFT", "RIGHT"].includes(this.state.direction))
-          this.setState({ direction: "RIGHT" });
-        break;
-      
-      default: break;
+    if (!this.state.started) {
+      if (event.keyCode >= 48 && event.keyCode <= 127) {
+        this.setState({started: true, gameOver: false});
+        this.intervalHandle = setInterval(this.moveSnake, this.state.speed);
+      }
     }
+    else
+      switch (event.keyCode) {
+        case 38:
+          if (!["UP", "DOWN"].includes(this.state.direction))
+            this.setState({ direction: "UP" });
+          break;
+        
+        case 40:
+          if (!["UP", "DOWN"].includes(this.state.direction))
+            this.setState({ direction: "DOWN" });
+          break;
+        
+        case 37:
+          if (!["LEFT", "RIGHT"].includes(this.state.direction))
+            this.setState({ direction: "LEFT" });  
+          break;
+        
+        case 39:
+          if (!["LEFT", "RIGHT"].includes(this.state.direction))
+            this.setState({ direction: "RIGHT" });
+          break;
+        
+        default: break;
+      }
   };
 
   moveSnake () {
     let dots = [...this.state.snakeDots];
-    let head = dots[dots.length - 1];
+    let head = dots.at(-1);
 
     switch (this.state.direction) {
       case 'RIGHT':
@@ -121,10 +139,11 @@ export default class Snake extends React.Component {
     });
   }
 
-  checkIfOutOfBorders () {
-    let head = this.state.snakeDots[this.state.snakeDots.length - 1];
+  isOutOfBorders () {
+    let head = this.state.snakeDots.at(-1);
     if (head[0] >= 100 || head[1] >= 100 || head[0] < 0 || head[1] < 0)
-      this.onGameOver();
+      return true;
+    return false;
   }
 
   checkIfCollapsed(){
@@ -133,7 +152,7 @@ export default class Snake extends React.Component {
     snake.pop();
     snake.forEach(dot => {
       if(head[0] === dot[0] && head[1] === dot[1])
-        this.onGameOver();
+        this.GameOver();
     })
   }
 
@@ -165,27 +184,26 @@ export default class Snake extends React.Component {
       });
   }
   
-  onGameOver () {
-    alert(`Game Over, Snake length is ${this.state.snakeDots.length}`);
-
-    this.setState({
-      speed:100,
-      food: getRandomCoordinates(),
-      direction:'RIGHT',
-      snakeDots:[
-        [0,0],
-        [2,0],
-        [4,0]
-      ]
-    });
+  GameOver () {
+    this.setState({ ...this.defaultState, gameOver: true, previousScore: this.state.snakeDots.length - 3 });
+    clearInterval(this.intervalHandle);
   }
 
-  render(){
+  render () {
     return (
-      <div className = "snake-app">
-        <SnakeBody snakeDots = {this.state.snakeDots}/>
-        <Food dot = {this.state.food}/>
-        {/* <Score value = {this.state.snakeDots.length - 3} /> */}
+      <div className = "Snake">
+        <div className = "snake-game">
+          <SnakeBody snakeDots = {this.state.snakeDots}/>
+          <Food dot = {this.state.food}/>
+        </div>
+
+        <div className = "snake-score">
+          <Score
+            score = {this.state.snakeDots.length - 3}
+            gameOver = {this.state.gameOver}
+            previousScore = {this.state.previousScore}
+          />
+        </div>
       </div>
     );  
   }
