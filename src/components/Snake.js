@@ -5,6 +5,8 @@ import Score from "./Score";
 
 import '../styles/Snake.css'
 
+const api = 'http://localhost:8888/api/snake';
+
 const getRandomCoordinates = () => {
   const min = 1;
   const max = 98;
@@ -47,7 +49,8 @@ export default class Snake extends React.Component {
       ],
       started: false,
       gameOver: false,
-      previousScore: 0
+      previousScore: 0,
+      highScore: 0
     };
 
     this.state = this.defaultState;
@@ -59,6 +62,14 @@ export default class Snake extends React.Component {
 
   componentDidMount () {
     document.addEventListener('keydown', this.onKeyDown, false);
+
+    fetch(api)
+      .then(response => response.json())
+      .then(json => {
+        console.log(json);
+        this.setState({highScore: json});
+      })
+      .catch(error => console.log(error));
   }
 
   componentWillUnmount () {
@@ -191,6 +202,26 @@ export default class Snake extends React.Component {
   GameOver () {
     this.setState({ ...this.defaultState, gameOver: true, previousScore: this.state.snakeDots.length - 3 });
     clearInterval(this.intervalHandle);
+
+    fetch(api, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        'name': 'anonymous',
+        'score': this.state.snakeDots.length - 3
+      })
+    });
+
+    fetch(api)
+      .then(response => response.json())
+      .then(json => {
+        console.log(json);
+        this.setState({highScore: json});
+      })
+      .catch(error => console.log(error));
   }
 
   render () {
@@ -206,6 +237,7 @@ export default class Snake extends React.Component {
             score = {this.state.snakeDots.length - 3}
             gameOver = {this.state.gameOver}
             previousScore = {this.state.previousScore}
+            highScore = {this.state.highScore}
           />
         </div>
       </div>
