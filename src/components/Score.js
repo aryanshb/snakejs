@@ -12,7 +12,7 @@ export default class Score extends React.Component {
         <br />
         Press any key to start
         <br /><br />
-        Press UP, DOWN, LEFT, RIGHT keys to move
+        Use W  A  S  D or Numpad Arrow Keys to move
       </div>
     );
   }
