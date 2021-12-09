@@ -83,22 +83,26 @@ export default class Snake extends React.Component {
     }
     else
       switch (event.keyCode) {
-        case 38:
+        case 104:
+        case 87:
           if (!["UP", "DOWN"].includes(this.state.direction))
             this.setState({ direction: "UP" });
           break;
         
-        case 40:
+        case 101:
+        case 83:
           if (!["UP", "DOWN"].includes(this.state.direction))
             this.setState({ direction: "DOWN" });
           break;
         
-        case 37:
+        case 100:
+        case 65:
           if (!["LEFT", "RIGHT"].includes(this.state.direction))
             this.setState({ direction: "LEFT" });  
           break;
         
-        case 39:
+        case 102:
+        case 68:
           if (!["LEFT", "RIGHT"].includes(this.state.direction))
             this.setState({ direction: "RIGHT" });
           break;
